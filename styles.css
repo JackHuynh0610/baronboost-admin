@@ -1,0 +1,53 @@
+body {
+    background-color: #1f1b1b;
+    font-family: Arial, sans-serif;
+}
+
+h1, h2 {
+    color: #6a1b9a;
+    text-align: center;
+}
+
+#loginForm {
+    width: 300px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #d1c4e9;
+    border-radius: 5px;
+    display: flex; /* Added display flex */
+    flex-direction: column; /* Added to align items in a column */
+    align-items: center; /* Center align items horizontally */
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #6a1b9a;
+}
+
+input[type="text"], input[type="password"] {
+    width: calc(100% - 12px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #6a1b9a;
+    border-radius: 3px;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    background-color: #6a1b9a;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: #4a148c;
+}
+
+#error-msg {
+    color: red;
+    margin-top: 10px;
+}

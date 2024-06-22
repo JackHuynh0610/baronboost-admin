@@ -1,0 +1,426 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>League of Legends Management</title>
+    <link rel="stylesheet" href="leagueoflegends.css">
+</head>
+<body>
+    <div class="container">
+        <h1>League of Legends Management</h1>
+        <button id="logoutBtn" onclick="logout()">Logout</button>
+        <a href="../menu/menu.html" class="menu-item">Back to menu</a>
+
+        <div id="searchContainer">
+            <select id="searchType" onchange="updateCriteria()">
+                <option value="user">User</option>
+                <option value="order">Order</option>
+                <option value="soloOrder">Solo Order</option>
+                <option value="duoOrder">Duo Order</option>
+                <option value="coachOrder">Coach Order</option>
+                <option value="netWinOrder">NetWin Order</option>
+            </select>
+            <select id="searchCriteria" onchange="updatePlaceholder()">
+                <option value="id">ID</option>
+                <option value="username">Username</option>
+                <option value="all">All</option>
+            </select>
+            <input type="text" id="searchBar" placeholder="Enter ID...">
+            <button id="searchBtn" onclick="search()">Search</button>
+        </div>
+        
+        <div id="outputContainer"></div>
+    </div>
+
+    <!------------------------------------------------------------------------------------------------------------------->
+    <!------------------------------------------------------------------------------------------------------------------->
+
+    <script src="../configuration.js"></script>
+    <script>
+        function refreshPage() {
+            location.reload();
+        }
+
+        function updatePlaceholder() {
+            // Get the current values of searchType, searchCriteria, and the searchBar element
+            const searchType = document.getElementById('searchType').value;
+            const searchCriteria = document.getElementById('searchCriteria').value;
+            const searchBar = document.getElementById('searchBar');
+
+            // Check the selected search criteria and update the placeholder and visibility of searchBar accordingly
+            if (searchCriteria === 'id') {
+                // If the search criteria is 'ID', set the placeholder to 'Enter ID...'
+                // and make the searchBar visible
+                searchBar.placeholder = 'Enter ID...';
+                searchBar.style.display = 'inline-block';
+            } else if (searchCriteria === 'username') {
+                // If the search criteria is 'Username', set the placeholder to 'Enter Username...'
+                // and make the searchBar visible
+                searchBar.placeholder = 'Enter Username...';
+                searchBar.style.display = 'inline-block';
+            } else if (searchCriteria === 'all') {
+                // If the search criteria is 'All', hide the searchBar since no input is needed
+                searchBar.style.display = 'none';
+            } else if (searchCriteria === 'status'){
+                searchBar.style.display = 'inline-block';
+                searchBar.placeholder = 'TAKEN, NOT_TAKEN, COMPLETE';
+            }
+        }
+
+        function updateCriteria() {
+            // Get the current values of searchType, searchCriteria, and the searchBar element
+            const searchType = document.getElementById('searchType').value;
+            const searchCriteria = document.getElementById('searchCriteria');
+            const searchBar = document.getElementById('searchBar');
+
+            // Clear all options
+            searchCriteria.innerHTML = '';
+
+            // Add options based on searchType
+            if (searchType === 'soloOrder' || searchType === 'duoOrder' || searchType === 'coachOrder' || searchType === 'netWinOrder') {
+                searchCriteria.add(new Option('ID', 'id'));
+                searchCriteria.add(new Option('All', 'all'));
+            } else if (searchType === 'order'){
+                searchCriteria.add(new Option('All', 'all'));
+                searchCriteria.add(new Option('Username', 'username'))
+                searchCriteria.add(new Option('Status', 'status'))
+            }else {
+                searchCriteria.add(new Option('ID', 'id'));
+                searchCriteria.add(new Option('Username', 'username'));
+                searchCriteria.add(new Option('All', 'all'));
+            } 
+
+            // Update the placeholder and visibility of searchBar
+            updatePlaceholder();
+        }
+
+        async function search() {
+            // Get the current values of searchType, searchCriteria, and the searchBar element
+            const searchType = document.getElementById('searchType').value;
+            const searchCriteria = document.getElementById('searchCriteria').value;
+            const query = document.getElementById('searchBar').value;
+
+            //finalize URL
+            let url = `${configuration.host()}`;
+
+            //Building URL
+            if (searchType === 'user') {
+                if (searchCriteria === 'all') {
+                    url += `/api/users`;
+                } else if (searchCriteria === 'id') {
+                    url += `/api/users/${query}`;
+                } else if (searchCriteria === 'username') {
+                    url += `/api/users/username/${query}`;
+                }
+            }else if(searchType === 'soloOrder'){
+                if (searchCriteria === 'all') {
+                    url += `/api/orders/soloOrders`;
+                } else if (searchCriteria === 'id') {
+                    url += `/api/orders/soloOrder/${query}`;
+                }
+            }else if(searchType === 'duoOrder'){
+                if (searchCriteria === 'all') {
+                    url += `/api/orders/duoOrders`;
+                } else if (searchCriteria === 'id') {
+                    url += `/api/orders/duoOrder/${query}`;
+                }
+            }else if(searchType === 'coachOrder'){
+                if (searchCriteria === 'all') {
+                    url += `/api/orders/coachOrders`;
+                } else if (searchCriteria === 'id') {
+                    url += `/api/orders/coachOrder/${query}`;
+                }
+            }else if(searchType === 'netWinOrder'){
+                if (searchCriteria === 'all') {
+                    url += `/api/orders/netWinOrders`;
+                } else if (searchCriteria === 'id') {
+                    url += `/api/orders/netWinOrder/${query}`;
+                }
+            }else if (searchType === 'order'){
+                url += `/api/orders`;
+                if(searchCriteria === 'username' || searchCriteria === 'status'){
+                    url += `/${searchCriteria}/${query.toUpperCase()}`;
+                }
+            }
+
+            if (!url) {
+                alert('Invalid search criteria or type');
+                return;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${configuration.token()}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                if(searchType === 'user'){
+                    displayUserData(data);
+                }else{
+                    displayOrderData(data);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Something went wrong while fetching data. Please check if the input is correct or Session expired.');
+            }
+        }
+
+        function displayUserData(data) {
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.innerHTML = '';
+
+            if (Array.isArray(data) && data.length === 0) {
+                outputContainer.innerHTML = '<p>No users found.</p>';
+            } else if (!Array.isArray(data) && !data.id) {
+                outputContainer.innerHTML = '<p>No user found.</p>';
+            } else {
+                let outputHTML = '';
+                (Array.isArray(data) ? data : [data]).forEach(user => {
+                    outputHTML += `
+                        <div class="user-card">
+                            <h2>${user.username}</h2>
+                            <p><strong>ID:</strong> ${user.id}</p>
+                            <p><strong>Email:</strong> ${user.email}</p>
+                            <p><strong>Role:</strong> ${user.role}</p>
+                            <p><strong>Boost Status:</strong> ${user.boostStatus}</p>
+                            <button onclick="deleteUserByID('${user.id}')">Delete by ID</button>
+                            <button onclick="patchUserBoostStatusByID('${user.id}')">Patch Boost Status by ID</button>
+                        </div>
+                    `;
+                });
+                outputContainer.innerHTML = outputHTML;
+            }
+        }
+
+        function displayOrderData(data) {
+            const searchType = document.getElementById('searchType').value; //get search Type to display correct data
+            const outputContainer = document.getElementById('outputContainer');
+            outputContainer.innerHTML = ''; // Clear previous content
+
+            if (!data || data.length === 0) {
+                outputContainer.innerHTML = '<p>No orders found.</p>';
+                return;
+            }
+
+            let outputHTML = '';
+            (Array.isArray(data) ? data : [data]).forEach(order => {
+                outputHTML += `
+                    <div class="order-card">
+                        <p><strong>Order ID:</strong> ${order.id}</p>
+                        <p><strong>User:</strong> ${order.user.username} (ID: ${order.user.id})</p>
+                        <p><strong>Email:</strong> ${order.user.email}</p>
+                        <p><strong>Role:</strong> ${order.user.role}</p>
+                        <p><strong>Boost Status:</strong> ${order.user.boostStatus}</p>
+                        <p><strong>League Username:</strong> ${order.leagueUsername}</p>
+                        <p><strong>League Password:</strong> ${order.leaguePassword}</p>
+                        <p><strong>Region:</strong> ${order.region}</p>
+                        <p><strong>Order Status:</strong> ${order.status}</p>
+                `;
+
+                if (searchType === 'soloOrder' || searchType === 'duoOrder') {
+                    outputHTML += `
+                        <p><strong>Current Rank:</strong> ${order.currentRank} ${order.currentDivision}</p>
+                        <p><strong>Desired Rank:</strong> ${order.desiredRank} ${order.desiredDivision}</p>
+                        <p><strong>Current LP:</strong> ${order.currentLp}</p>
+                        <p><strong>LP per Game:</strong> ${order.lpPerGame}</p>
+                    `;
+                } else if (searchType === 'coachOrder') {
+                    outputHTML += `
+                        <p><strong>Number of Games:</strong> ${order.numberOfGame}</p>
+                    `;
+                } else if (searchType === 'netWinOrder') {
+                    outputHTML += `
+                        <p><strong>Current Rank:</strong> ${order.currentRank}</p>
+                        <p><strong>Number of Game Wins:</strong> ${order.numberOfGameWin}</p>
+                    `;
+                }
+
+                outputHTML += `<p><strong>Order Price:</strong> ${order.orderPrice}</p>`;
+                outputHTML += `
+                        <button onclick="deleteOrderByID(${order.id})">Delete by ID</button>
+                        <button onclick="patchOrderStatusByID(${order.id})">Patch Order Status by ID</button>
+                    </div>
+                `;
+            });
+
+            outputContainer.innerHTML = outputHTML;
+        }
+
+        function deleteUserByID(id){
+            const confirmation = window.confirm('Are you sure you want to delete this user?');
+
+            if (confirmation) {
+                // Call the endpoint to delete the user using fetch or another method
+                fetch(`http://localhost:8080/api/users/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${configuration.token()}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('User deleted successfully!');
+                        refreshPage();
+                        // Refresh or update the user interface as needed
+                    } else {
+                        throw new Error('Failed to delete user. Session expired.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete user. Something is wrong or Session expired?');
+                });
+            }
+        }
+
+        async function patchUserBoostStatusByID(id) {
+            // Confirm before sending the patch request
+            const confirmed = confirm("Are you sure you want to update the boost status?");
+            if (!confirmed) {
+                return; // Exit the function if not confirmed
+            }
+
+            const newStatus = prompt("Enter the new boost status (BOOSTING, NOT_BOOSTING, NONE):");
+            if (!newStatus || !['BOOSTING', 'NOT_BOOSTING', 'NONE'].includes(newStatus.toUpperCase())) {
+                alert("Invalid boost status entered. Please enter BOOSTING, NOT_BOOSTING, or NONE.");
+                return;
+            }
+
+            const url = `${configuration.host()}/api/users/${id}/boostStatus/${newStatus.toUpperCase()}`;
+
+            const requestOptions = {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${configuration.token()}`,
+                    'Content-Type': 'application/json'
+                },
+            };
+
+            try {
+                const response = await fetch(url, requestOptions);
+                if (response.ok) {
+                    alert('Boost status updated successfully!');
+                    refreshPage();
+                } else {
+                    console.error('Error updating boost status:', response.status);
+                    alert('Error updating boost status. Please check your input or Session expired.');
+                }
+            } catch (error) {
+                console.error('Error updating boost status:', error);
+                alert('Error updating boost status. Session expired.');
+            }
+        }
+
+        function deleteOrderByID(id){
+            // Get the current values of searchType, searchCriteria, and the searchBar element
+            const searchType = document.getElementById('searchType').value;
+            const searchCriteria = document.getElementById('searchCriteria').value;
+            const query = document.getElementById('searchBar').value;
+
+            let url = `${configuration.host()}/api/orders`;
+
+            if(searchType === 'soloOrder'){
+                url += `/soloOrder/${id}`;
+            }else if(searchType === 'duoOrder'){
+                url += `/duoOrder/${id}`;
+            }else if(searchType === 'coachOrder'){
+                url += `/coachOrder/${id}`;
+            }else if (searchType === 'netWinOrder'){
+                url += `/netWinOrder/${id}`;
+            }else if (searchType === 'order'){
+                alert('You can\'t delete an Order without knowing the Type. Please select the order type instead of generic Order.')
+                return;
+            }
+
+            if (!url) {
+                alert('Invalid search criteria or type');
+                return;
+            }
+
+            const confirmation = window.confirm('Are you sure you want to delete this order?');
+
+            if (confirmation) {
+                // Call the endpoint to delete the user using fetch or another method
+                fetch(url, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${configuration.token()}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Order deleted successfully!');
+                        refreshPage();
+                        // Refresh or update the user interface as needed
+                    } else {
+                        throw new Error('Failed to delete user. Session expired.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete user. Something is wrong or Session expired?');
+                });
+            }
+        }
+
+        async function patchOrderStatusByID(id){
+            // Get the current values of searchType, searchCriteria, and the searchBar element
+            const searchType = document.getElementById('searchType').value;
+            const searchCriteria = document.getElementById('searchCriteria').value;
+            const query = document.getElementById('searchBar').value;
+
+            if(searchType === 'order'){
+                alert("You can\'t update an Order without knowing the Type. Please select the order type instead of generic Order.");
+                return
+            }
+
+            // Confirm before sending the patch request
+            const confirmed = confirm("Are you sure you want to update the Order status?");
+            if (!confirmed) {
+                return; // Exit the function if not confirmed
+            }
+
+            const newStatus = prompt("Enter the new order status (TAKEN, NOT_TAKEN, COMPLETE):");
+            if (!newStatus || !['TAKEN', 'NOT_TAKEN', 'COMPLETE'].includes(newStatus.toUpperCase())) {
+                alert("Invalid boost status entered. Please enter TAKEN, NOT_TAKEN, COMPLETE.");
+                return;
+            }
+
+            const url = `${configuration.host()}/api/orders/${searchType}/${id}/status/${newStatus.toUpperCase()}/username/${configuration.username()}`;
+
+            const requestOptions = {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${configuration.token()}`,
+                    'Content-Type': 'application/json'
+                },
+            };
+
+            try {
+                const response = await fetch(url, requestOptions);
+                if (response.ok) {
+                    alert('Order status updated successfully!');
+                    refreshPage();
+                } else {
+                    console.error('Error updating order status:', response.status);
+                    alert('Error updating order status. Please check your input or Session expired.');
+                }
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                alert('Error updating order status. Session expired.');
+            }
+        }
+
+    </script>
+</body>
+</html>
