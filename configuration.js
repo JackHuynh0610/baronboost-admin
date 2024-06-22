@@ -1,4 +1,4 @@
-const mode = 1;
+const mode = 0;
 
 const host_local = "http://localhost:8080";
 const host_remote = "https://baronboost-latest.onrender.com";
